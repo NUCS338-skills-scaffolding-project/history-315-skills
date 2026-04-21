@@ -1,0 +1,37 @@
+name: Validate Skill Metadata
+
+# Runs every time someone pushes to the repo
+on:
+  push:
+    paths:
+      - 'skills/**/skills.md'  # Only triggers when a skills.md is changed
+  pull_request:
+    paths:
+      - 'skills/**/skills.md'
+  workflow_dispatch: 
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    name: Check YAML Metadata in skills.md
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      # Step 1: Check out the repo code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      # Step 3: Install required Python packages
+      - name: Install dependencies
+        run: pip install python-frontmatter
+
+      # Step 4: Run the validation script
+      - name: Validate skills.md files
+        run: python .github/scripts/validate_skills.py
