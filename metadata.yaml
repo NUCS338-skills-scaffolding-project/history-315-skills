@@ -2,4 +2,9 @@ course_id: "HISTORY-315"
 course_name: "The United States Since 1968"
 course_type: "humanities"
 spoc_contact: "connorlai2026@u.northwestern.edu"
-skills_used: []
+skills_used:
+  - "decomposing-questions-skill"
+  - "causal-chains-skill"
+  - "assumption-validation-skill"
+  - "rubric-feedback-skill"
+  - "rubric-validation-skill"
