@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+  html, body, #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-ink-50 text-ink-800 font-sans antialiased;
+    background-image:
+      radial-gradient(circle at 20% 0%, rgba(176,74,46,0.04), transparent 40%),
+      radial-gradient(circle at 100% 100%, rgba(176,74,46,0.05), transparent 40%);
+  }
+}
+
+@layer components {
+  .prose-history {
+    @apply text-[15px] leading-relaxed text-ink-800;
+  }
+  .prose-history p { @apply mb-3; }
+  .prose-history p:last-child { @apply mb-0; }
+  .prose-history ul, .prose-history ol { @apply pl-5 mb-3; }
+  .prose-history ul { @apply list-disc; }
+  .prose-history ol { @apply list-decimal; }
+  .prose-history li { @apply mb-1; }
+  .prose-history h1, .prose-history h2, .prose-history h3 {
+    @apply font-serif font-semibold text-ink-900 mt-4 mb-2;
+  }
+  .prose-history h1 { @apply text-xl; }
+  .prose-history h2 { @apply text-lg; }
+  .prose-history h3 { @apply text-base; }
+  .prose-history strong { @apply font-semibold text-ink-900; }
+  .prose-history em { @apply italic; }
+  .prose-history code {
+    @apply font-mono text-[13px] bg-ink-100 px-1 py-0.5 rounded;
+  }
+  .prose-history pre {
+    @apply font-mono text-[13px] bg-ink-900 text-ink-100 p-3 rounded-md overflow-x-auto mb-3;
+  }
+  .prose-history pre code {
+    @apply bg-transparent p-0 text-ink-100;
+  }
+  .prose-history blockquote {
+    @apply border-l-2 border-accent/40 pl-3 italic text-ink-700;
+  }
+  .prose-history a {
+    @apply text-accent underline underline-offset-2 hover:text-accent-dark;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar { width: 8px; height: 8px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(20,16,8,0.18);
+    border-radius: 999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(20,16,8,0.32);
+  }
+}
+
+.react-flow__renderer { background: transparent; }
+.react-flow__controls {
+  box-shadow: none !important;
+  border: 1px solid #d9d5c3 !important;
+  background: rgba(247,246,242,0.9) !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+.react-flow__controls button {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(217,213,195,0.7) !important;
+  color: #2a2619 !important;
+  width: 28px !important;
+  height: 28px !important;
+}
+.react-flow__controls button:hover { background: #eeece4 !important; }
+.react-flow__controls button:last-child { border-bottom: 0 !important; }
+.react-flow__attribution {
+  background: transparent !important;
+  font-size: 10px;
+  color: #8b8267 !important;
+}
