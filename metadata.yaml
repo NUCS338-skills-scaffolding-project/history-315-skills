@@ -8,3 +8,8 @@ skills_used:
   - "assumption-validation-skill"
   - "rubric-feedback-skill"
   - "rubric-validation-skill"
+  - "cause-effect-between-events-skill"
+  - "learning-objective-comparison-skill"
+  - "lecture-ingestion-skill"
+  - "reading-connector-skill"
+  - "identify-misconceptions-skill"
