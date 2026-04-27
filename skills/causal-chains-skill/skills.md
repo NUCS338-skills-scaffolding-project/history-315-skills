@@ -72,6 +72,54 @@ Mark any arrow the student can't defend as **asserted**, not established.
 Produce a compact chain (nodes + typed edges) the student can drop into a paragraph or
 feed to Assumption Validation for the underlying premises.
 
+---
+
+## Required Output Format (machine-readable)
+
+Whenever the conversation surfaces, extends, or revises a cause→effect link, emit a fenced
+code block tagged ```` ```causal-chain ```` containing JSON of this exact shape, AFTER
+the prose. The host UI parses these blocks to build a live graph that persists across the
+entire chat session, so node IDs MUST be stable and reused turn-to-turn.
+
+````
+```causal-chain
+{
+  "nodes": [
+    {"id": "carter_stagflation", "label": "Carter-era stagflation",   "year": 1979, "kind": "condition"},
+    {"id": "volcker_shock",      "label": "Volcker interest-rate shock", "year": 1979, "kind": "policy"},
+    {"id": "reagan_election",    "label": "Reagan electoral victory",    "year": 1980, "kind": "event"}
+  ],
+  "edges": [
+    {"from": "carter_stagflation", "to": "volcker_shock",   "label": "forced anti-inflation intervention", "kind": "trigger"},
+    {"from": "volcker_shock",      "to": "reagan_election", "label": "recession discredited Carter",        "kind": "amplifier"}
+  ]
+}
+```
+````
+
+### Field rules
+- `nodes[].id` — stable, snake_case, ASCII. Reuse the same id across turns when referring
+  to the same entity (the UI dedupes by id; a typo creates a duplicate node).
+- `nodes[].label` — short human-readable name (≤ 60 chars).
+- `nodes[].year` — single 4-digit year (use the start year for ranges). Strongly preferred
+  — the UI uses it to lay out a timeline.
+- `nodes[].kind` — one of `event`, `policy`, `actor`, `condition`, `idea`. Color codes the
+  node in the graph.
+- `edges[].kind` — one of `precondition`, `trigger`, `amplifier`, `consequence`. This is
+  the four-link distinction from the Tutor Stance; the UI colors edges by it.
+- `edges[].label` — the *mechanism*, not just "caused". Prefer verbs like "prompted",
+  "delegitimized", "made possible", "blocked", "accelerated". If the student hasn't named
+  a mechanism yet, set the edge `label` to `"asserted"` so the UI can flag it weak.
+
+### Emission rules
+- Emit only the *delta* for this turn (new or revised nodes/edges). The UI merges into the
+  running graph.
+- To revise an edge, re-emit it with the corrected label/kind; the UI replaces by
+  `(from, to)` pair.
+- One block per assistant turn; omit it on turns that don't touch the chain.
+
+---
+
 ## Safe Output Types
 - Labeled node-and-edge chains (precondition → trigger → event → effect → long-run).
 - Probing questions about mechanism.
