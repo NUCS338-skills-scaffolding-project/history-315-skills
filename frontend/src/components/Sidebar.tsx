@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { ChevronLeft, MessageSquarePlus, Network, Trash2 } from "lucide-react";
-import type { ChatSession } from "../types";
+import { BookOpen, ChevronLeft, MessageSquarePlus, Network, Trash2 } from "lucide-react";
+import type { AppView, ChatSession } from "../types";
 
 interface Props {
   sessions: ChatSession[];
@@ -10,6 +10,8 @@ interface Props {
   onSelect: (id: string) => void;
   onNew: () => void;
   onDelete: (id: string) => void;
+  view: AppView;
+  onOpenCatalog: () => void;
 }
 
 function relativeTime(t: number): string {
@@ -28,6 +30,8 @@ export function Sidebar({
   onSelect,
   onNew,
   onDelete,
+  view,
+  onOpenCatalog,
 }: Props) {
   if (collapsed) {
     return (
@@ -43,20 +47,40 @@ export function Sidebar({
 
   return (
     <div className="h-full flex flex-col border-r border-ink-200/70 bg-ink-100/40 backdrop-blur">
-      <div className="flex items-center gap-2 px-3 py-3 border-b border-ink-200/70">
+      <div className="flex flex-col gap-1.5 px-3 py-3 border-b border-ink-200/70">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onOpenCatalog}
+            className={[
+              "flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[13px] font-medium transition",
+              view === "catalog"
+                ? "bg-accent text-white shadow-paper hover:bg-accent-dark"
+                : "bg-white border border-ink-200 text-ink-700 hover:border-ink-400 shadow-paper",
+            ].join(" ")}
+            title="Browse the course knowledge graph"
+          >
+            <BookOpen size={14} />
+            Catalog
+          </button>
+          <button
+            onClick={onToggle}
+            className="grid place-items-center w-9 h-9 rounded-xl border border-ink-200 bg-white text-ink-500 hover:text-ink-800 transition"
+            title="Collapse sidebar"
+          >
+            <ChevronLeft size={14} />
+          </button>
+        </div>
         <button
           onClick={onNew}
-          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-ink-900 hover:bg-ink-800 text-ink-50 text-[13px] font-medium shadow-paper transition"
+          className={[
+            "w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[13px] font-medium transition",
+            view === "chat"
+              ? "bg-ink-900 hover:bg-ink-800 text-ink-50 shadow-paper"
+              : "bg-white border border-ink-200 text-ink-700 hover:border-ink-400 shadow-paper",
+          ].join(" ")}
         >
           <MessageSquarePlus size={14} />
           New chat
-        </button>
-        <button
-          onClick={onToggle}
-          className="grid place-items-center w-9 h-9 rounded-xl border border-ink-200 bg-white text-ink-500 hover:text-ink-800 transition"
-          title="Collapse sidebar"
-        >
-          <ChevronLeft size={14} />
         </button>
       </div>
 

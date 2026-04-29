@@ -10,6 +10,10 @@ uploads/
 sessions/
 causal_chains/
 .warmed_session.json
+catalog.db
+catalog.db-wal
+catalog.db-shm
+catalog/
 
 frontend/node_modules/
 frontend/dist/

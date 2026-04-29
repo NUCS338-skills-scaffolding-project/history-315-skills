@@ -1,4 +1,4 @@
-import type { AttachedFile, CausalGraph } from "../types";
+import type { AttachedFile, CausalGraph, NodeContext } from "../types";
 
 export interface UploadResponse {
   path: string;
@@ -34,6 +34,8 @@ export interface ChatStreamArgs {
   /** Claude CLI's session UUID from the previous turn, if any. */
   claudeSessionId: string | null;
   filePath?: string | null;
+  /** Sent only on the first turn of a node-anchored chat. */
+  nodeContext?: NodeContext | null;
   signal?: AbortSignal;
   onDelta: (text: string) => void;
   onToolUse: (info: { name: string; description?: string }) => void;
@@ -70,6 +72,7 @@ export async function streamChat(args: ChatStreamArgs): Promise<void> {
       session_id: args.sessionId,
       claude_session_id: args.claudeSessionId,
       file_path: args.filePath ?? null,
+      node_context: args.nodeContext ?? null,
     }),
   });
 

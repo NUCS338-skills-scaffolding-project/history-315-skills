@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GraduationCap, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { CatalogView } from "./components/CatalogView";
 import { ChatPanel } from "./components/ChatPanel";
 import { Composer } from "./components/Composer";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -15,6 +16,7 @@ import {
 import type {
   ChatMessage,
   ChatSession,
+  NodeContext,
   PersistedState,
 } from "./types";
 
@@ -84,7 +86,7 @@ export default function App() {
   useEffect(() => {
     if (state.sessions.length === 0) {
       const s = newSession();
-      setState({ version: 1, activeSessionId: s.id, sessions: [s] });
+      setState((prev) => ({ ...prev, activeSessionId: s.id, sessions: [s] }));
     } else if (!state.activeSessionId) {
       setState((prev) => ({ ...prev, activeSessionId: prev.sessions[0]!.id }));
     }
@@ -120,12 +122,82 @@ export default function App() {
       ...prev,
       activeSessionId: s.id,
       sessions: [s, ...prev.sessions],
+      view: "chat",
     }));
   }, []);
 
+  const handleSetView = useCallback((view: "chat" | "catalog") => {
+    setState((prev) => ({ ...prev, view }));
+  }, []);
+
+  const handleSetActiveCatalogNode = useCallback((id: string | null) => {
+    setState((prev) => ({ ...prev, catalogActiveNodeId: id }));
+  }, []);
+
+  const handleCatalogTreeExpandedChange = useCallback((next: string[]) => {
+    setState((prev) => ({ ...prev, catalogTreeExpanded: next }));
+  }, []);
+
+  const handleCatalogPositionChange = useCallback(
+    (
+      activeNodeId: string | null,
+      nodeId: string,
+      pos: { x: number; y: number },
+    ) => {
+      const key = activeNodeId ?? "__top__";
+      setState((prev) => ({
+        ...prev,
+        catalogPositions: {
+          ...prev.catalogPositions,
+          [key]: {
+            ...(prev.catalogPositions[key] ?? {}),
+            [nodeId]: pos,
+          },
+        },
+      }));
+    },
+    [],
+  );
+
+  const handleAskAboutNode = useCallback(
+    (ctx: NodeContext) => {
+      setState((prev) => {
+        const existingId = prev.nodeChats[ctx.id];
+        const existing = existingId
+          ? prev.sessions.find((s) => s.id === existingId)
+          : null;
+        if (existing) {
+          // Resume existing anchored chat.
+          return {
+            ...prev,
+            view: "chat",
+            activeSessionId: existing.id,
+          };
+        }
+        // Create a new session anchored to this node.
+        const s = newSession();
+        s.title = ctx.label;
+        s.nodeContext = ctx;
+        return {
+          ...prev,
+          view: "chat",
+          activeSessionId: s.id,
+          sessions: [s, ...prev.sessions],
+          nodeChats: { ...prev.nodeChats, [ctx.id]: s.id },
+        };
+      });
+    },
+    [],
+  );
+
+  const hasExistingChatForNode = useCallback(
+    (nodeId: string) => Boolean(state.nodeChats[nodeId]),
+    [state.nodeChats],
+  );
+
   const handleSelectSession = useCallback((id: string) => {
     if (abortRef.current) abortRef.current.abort();
-    setState((prev) => ({ ...prev, activeSessionId: id }));
+    setState((prev) => ({ ...prev, activeSessionId: id, view: "chat" }));
   }, []);
 
   const handleDeleteSession = useCallback((id: string) => {
@@ -135,8 +207,18 @@ export default function App() {
         prev.activeSessionId === id
           ? remaining[0]?.id ?? null
           : prev.activeSessionId;
+      // Drop any node→session mappings that pointed at this session.
+      const nextNodeChats: Record<string, string> = {};
+      for (const [nodeId, sid] of Object.entries(prev.nodeChats)) {
+        if (sid !== id) nextNodeChats[nodeId] = sid;
+      }
       // If we deleted the last session, the lazy-create effect will spin a new one.
-      return { ...prev, activeSessionId: nextActive, sessions: remaining };
+      return {
+        ...prev,
+        activeSessionId: nextActive,
+        sessions: remaining,
+        nodeChats: nextNodeChats,
+      };
     });
   }, []);
 
@@ -210,6 +292,12 @@ export default function App() {
       const claudeSessionIdAtStart = active.claudeSessionId;
       const isFirstUserMessage =
         active.messages.filter((m) => m.role === "user").length === 0;
+      // Send the catalog node context only on the first turn — Claude inherits
+      // it on subsequent --resume turns.
+      const nodeContextForTurn =
+        isFirstUserMessage && !claudeSessionIdAtStart
+          ? active.nodeContext ?? null
+          : null;
 
       updateSession(sessionId, (s) => ({
         ...s,
@@ -238,6 +326,7 @@ export default function App() {
           sessionId,
           claudeSessionId: claudeSessionIdAtStart,
           filePath,
+          nodeContext: nodeContextForTurn,
           signal: ctrl.signal,
           onDelta: (delta) => {
             updateSession(sessionId, (s) => ({
@@ -306,6 +395,7 @@ export default function App() {
   return (
     <div className="h-full flex flex-col">
       <Header
+        view={state.view}
         graphOpen={graphOpen}
         onToggleGraph={() => setGraphOpen((v) => !v)}
         graphCount={active?.graph.nodes.length ?? 0}
@@ -317,28 +407,43 @@ export default function App() {
         >
           <Sidebar
             sessions={state.sessions}
-            activeId={state.activeSessionId}
+            activeId={state.view === "chat" ? state.activeSessionId : null}
             collapsed={false}
             onToggle={() => setSidebarCollapsed((v) => !v)}
             onSelect={handleSelectSession}
             onNew={handleNewSession}
             onDelete={handleDeleteSession}
+            view={state.view}
+            onOpenCatalog={() => handleSetView("catalog")}
           />
         </div>
         {sidebarCollapsed && (
           <Sidebar
             sessions={state.sessions}
-            activeId={state.activeSessionId}
+            activeId={state.view === "chat" ? state.activeSessionId : null}
             collapsed={true}
             onToggle={() => setSidebarCollapsed((v) => !v)}
             onSelect={handleSelectSession}
             onNew={handleNewSession}
             onDelete={handleDeleteSession}
+            view={state.view}
+            onOpenCatalog={() => handleSetView("catalog")}
           />
         )}
 
         <main className="flex-1 min-w-0 border-r border-ink-200/70 bg-ink-50/40 relative">
-          {active ? (
+          {state.view === "catalog" ? (
+            <CatalogView
+              activeNodeId={state.catalogActiveNodeId}
+              onActiveNodeChange={handleSetActiveCatalogNode}
+              treeExpanded={state.catalogTreeExpanded}
+              onTreeExpandedChange={handleCatalogTreeExpandedChange}
+              positions={state.catalogPositions}
+              onPositionChange={handleCatalogPositionChange}
+              onAskAbout={handleAskAboutNode}
+              hasExistingChat={hasExistingChatForNode}
+            />
+          ) : active ? (
             <ChatPanel
               messages={active.messages}
               composer={
@@ -359,7 +464,7 @@ export default function App() {
           )}
         </main>
 
-        {graphOpen && (
+        {state.view === "chat" && graphOpen && (
           <>
             <div
               role="separator"
@@ -394,12 +499,13 @@ export default function App() {
 }
 
 interface HeaderProps {
+  view: "chat" | "catalog";
   graphOpen: boolean;
   onToggleGraph: () => void;
   graphCount: number;
 }
 
-function Header({ graphOpen, onToggleGraph, graphCount }: HeaderProps) {
+function Header({ view, graphOpen, onToggleGraph, graphCount }: HeaderProps) {
   return (
     <header className="flex items-center gap-3 px-5 py-3 border-b border-ink-200/70 bg-ink-50/80 backdrop-blur">
       <div className="w-9 h-9 rounded-xl bg-ink-900 text-ink-50 grid place-items-center shadow-paper">
@@ -413,14 +519,16 @@ function Header({ graphOpen, onToggleGraph, graphCount }: HeaderProps) {
           The United States Since 1968 · Socratic tutor with causal-chain graph
         </div>
       </div>
-      <button
-        onClick={onToggleGraph}
-        className="ml-auto inline-flex items-center gap-1.5 text-[12px] text-ink-600 hover:text-accent-dark border border-ink-200 bg-white rounded-full px-3 py-1.5 transition"
-        title="Toggle graph panel"
-      >
-        {graphOpen ? <PanelRightClose size={13} /> : <PanelRightOpen size={13} />}
-        Graph ({graphCount})
-      </button>
+      {view === "chat" && (
+        <button
+          onClick={onToggleGraph}
+          className="ml-auto inline-flex items-center gap-1.5 text-[12px] text-ink-600 hover:text-accent-dark border border-ink-200 bg-white rounded-full px-3 py-1.5 transition"
+          title="Toggle graph panel"
+        >
+          {graphOpen ? <PanelRightClose size={13} /> : <PanelRightOpen size={13} />}
+          Graph ({graphCount})
+        </button>
+      )}
     </header>
   );
 }

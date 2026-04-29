@@ -2,11 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import ReactFlow, {
   Background,
   Controls,
-  Handle,
-  Position,
   type Edge,
   type Node,
-  type NodeProps,
 } from "reactflow";
 import { Eraser, MousePointerClick, Network } from "lucide-react";
 import type {
@@ -14,9 +11,9 @@ import type {
   CausalEdgeKind,
   CausalGraph,
   CausalNode,
-  CausalNodeKind,
 } from "../types";
 import { NodeDetailPanel } from "./NodeDetailPanel";
+import { CausalNodeCard } from "./CausalNodeCard";
 
 type NodeClickHandler = (event: React.MouseEvent, node: Node) => void;
 type EdgeClickHandler = (event: React.MouseEvent, edge: Edge) => void;
@@ -36,14 +33,6 @@ const COL_WIDTH = 280;
 const ROW_HEIGHT = 130;
 const PAD = 80;
 
-const KIND_STYLES: Record<CausalNodeKind, { dot: string; ring: string; label: string }> = {
-  event:     { dot: "#b04a2e", ring: "ring-accent/40",      label: "event"     },
-  policy:    { dot: "#3f3a29", ring: "ring-ink-700/40",     label: "policy"    },
-  actor:     { dot: "#7a2f1a", ring: "ring-accent-dark/40", label: "actor"     },
-  condition: { dot: "#8b8267", ring: "ring-ink-400/40",     label: "condition" },
-  idea:      { dot: "#5e573f", ring: "ring-ink-500/40",     label: "idea"      },
-};
-
 const EDGE_STYLES: Record<CausalEdgeKind, { stroke: string; dash?: string; label: string }> = {
   precondition: { stroke: "#8b8267", dash: "4 3", label: "precondition" },
   trigger:      { stroke: "#b04a2e",                label: "trigger"      },
@@ -52,39 +41,7 @@ const EDGE_STYLES: Record<CausalEdgeKind, { stroke: string; dash?: string; label
 };
 const ASSERTED_LABEL = "asserted";
 
-function CausalNodeView({ data, selected }: NodeProps<{ node: CausalNode }>) {
-  const n = data.node;
-  // Tolerant fallback: Claude occasionally invents a `kind` we don't model
-  // (e.g. "movement") or omits it. Default to event styling instead of
-  // crashing the whole graph.
-  const style =
-    (n.kind && KIND_STYLES[n.kind as CausalNodeKind]) || KIND_STYLES.event;
-  return (
-    <div
-      className={[
-        "rounded-xl bg-white border border-ink-200 shadow-paper px-3 py-2 min-w-[160px] max-w-[220px]",
-        "ring-2 transition cursor-grab active:cursor-grabbing",
-        selected ? "ring-accent" : "ring-transparent",
-      ].join(" ")}
-    >
-      <Handle type="target" position={Position.Left} style={{ background: "#8b8267" }} />
-      <div className="flex items-center gap-1.5 mb-0.5 text-[10px] uppercase tracking-wider text-ink-400">
-        <span
-          className="inline-block w-1.5 h-1.5 rounded-full"
-          style={{ background: style.dot }}
-        />
-        {style.label}
-        {n.year ? <span className="ml-auto text-ink-500">{n.year}</span> : null}
-      </div>
-      <div className="font-serif font-semibold text-[14px] text-ink-900 leading-snug">
-        {n.label}
-      </div>
-      <Handle type="source" position={Position.Right} style={{ background: "#8b8267" }} />
-    </div>
-  );
-}
-
-const nodeTypes = { causal: CausalNodeView };
+const nodeTypes = { causal: CausalNodeCard };
 
 interface LaidOut {
   rfNodes: Node[];
