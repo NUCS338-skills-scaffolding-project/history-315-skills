@@ -13,12 +13,20 @@ Architecture (kept simple on purpose):
     state. JSON does NOT appear inline in the chat reply.
 
 Endpoints:
-    GET    /api/health              — sanity check
-    GET    /api/skills              — list discovered skill metadata
-    POST   /api/upload              — multipart file upload (assignments)
-    GET    /api/graph/{session_id}  — current causal-chain JSON
-    DELETE /api/graph/{session_id}  — wipe the graph for that session
-    POST   /api/chat                — SSE stream of Claude tokens
+    GET    /api/health                       — sanity check
+    GET    /api/skills                       — discovered skill metadata
+    POST   /api/upload                       — assignment upload
+    GET    /api/graph/{session_id}           — current causal-chain JSON
+    DELETE /api/graph/{session_id}           — wipe that session's graph
+    POST   /api/chat                         — SSE stream of Claude tokens
+    GET    /api/catalog                      — top-level catalog subgraph
+    GET    /api/catalog/node/{id}            — subgraph for a catalog node
+    GET    /api/catalog/node/{id}/path       — ancestors for breadcrumb
+    GET    /api/catalog/search?q=            — FTS5 search across all nodes
+    GET    /api/catalog/build/status         — current build phase / counters
+    POST   /api/catalog/build                — kick off the build pipeline
+    POST   /api/catalog/build/cancel         — cancel an in-flight build
+    POST   /api/catalog/wipe                 — admin: drop all catalog rows
 """
 
 from __future__ import annotations
@@ -37,6 +45,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from claude_api import ClaudeAPI, ClaudeAPIError
+from course_catalog import db as catalog_db
+from course_catalog.builder import Builder as CatalogBuilder
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 log = logging.getLogger("hist315")
@@ -46,8 +56,15 @@ SKILLS_DIR = PROJECT_ROOT / "skills"
 COURSE_DIR = PROJECT_ROOT / "course-materials"
 UPLOAD_DIR = PROJECT_ROOT / "uploads"
 GRAPHS_DIR = PROJECT_ROOT / "causal_chains"
+CATALOG_DB_PATH = PROJECT_ROOT / "catalog.db"
 UPLOAD_DIR.mkdir(exist_ok=True)
 GRAPHS_DIR.mkdir(exist_ok=True)
+
+# Catalog: SQLite-backed knowledge graph of the course materials. Initialized
+# at startup; the build pipeline is user-triggered (POST /api/catalog/build)
+# because it's expensive (30-90 min Claude time).
+catalog_db.init_db(CATALOG_DB_PATH)
+CATALOG_BUILDER = CatalogBuilder(project_root=PROJECT_ROOT, db_path=CATALOG_DB_PATH)
 
 DEFAULT_MODEL = "claude-sonnet-4-6"
 _TEMPLATE_MARKER = 'skill_id: "skill-name"'
@@ -288,6 +305,15 @@ app.add_middleware(
 _executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="claude-stream")
 
 
+class NodeContext(BaseModel):
+    """Anchors a chat session to a catalog node so the tutor knows what
+    the student wants to talk about. Sent only on the first turn."""
+    id: str
+    label: str
+    description: str
+    breadcrumb: str
+
+
 class ChatRequest(BaseModel):
     message: str
     session_id: str
@@ -296,6 +322,8 @@ class ChatRequest(BaseModel):
     """The CLI session UUID from a prior turn, or None for a fresh chat."""
     file_path: str | None = None
     model: str | None = None
+    node_context: NodeContext | None = None
+    """Set when this chat is anchored to a catalog node (first turn only)."""
 
 
 @app.get("/api/health")
@@ -329,6 +357,93 @@ def clear_graph(session_id: str) -> dict:
     return {"ok": True}
 
 
+# ---------------------------------------------------------------------------
+# Catalog endpoints
+# ---------------------------------------------------------------------------
+
+@app.get("/api/catalog")
+def catalog_top() -> dict:
+    """Top-level subgraph: direct children of the implicit root."""
+    if catalog_db.is_empty(CATALOG_DB_PATH):
+        return {"empty": True, "build": CATALOG_BUILDER.status().to_dict()}
+    return catalog_db.get_subgraph(CATALOG_DB_PATH, None)
+
+
+@app.get("/api/catalog/node/{node_id}")
+def catalog_node(node_id: str) -> dict:
+    sub = catalog_db.get_subgraph(CATALOG_DB_PATH, node_id)
+    if sub["parent"] is None:
+        raise HTTPException(404, "node not found")
+    return sub
+
+
+@app.get("/api/catalog/node/{node_id}/path")
+def catalog_node_path(node_id: str) -> dict:
+    """Ancestors of a node, root-first — for breadcrumb after a search jump."""
+    node = catalog_db.get_node(CATALOG_DB_PATH, node_id)
+    if not node:
+        raise HTTPException(404, "node not found")
+    return {
+        "node": node,
+        "ancestors": catalog_db.get_ancestors(CATALOG_DB_PATH, node_id),
+    }
+
+
+@app.get("/api/catalog/tree")
+def catalog_tree() -> dict:
+    """Flat list of every node — feeds the top-right tree-view sidebar.
+
+    Returned shape: ``{"nodes": [{id, parent_id, label, kind, level,
+    year, is_leaf, child_count}, ...]}``. The frontend builds the parent
+    pointer tree on its end and caches it for the session.
+    """
+    return {"nodes": catalog_db.get_all_nodes_flat(CATALOG_DB_PATH)}
+
+
+@app.get("/api/catalog/search")
+def catalog_search(q: str = "", limit: int = 20) -> dict:
+    return {"hits": catalog_db.search(CATALOG_DB_PATH, q, limit)}
+
+
+@app.get("/api/catalog/build/status")
+def catalog_build_status() -> dict:
+    s = CATALOG_BUILDER.status().to_dict()
+    s["db"] = catalog_db.get_status(CATALOG_DB_PATH)
+    s["log_cursor"] = CATALOG_BUILDER.log_cursor()
+    return s
+
+
+@app.get("/api/catalog/build/log")
+def catalog_build_log(since: int = 0, limit: int = 200) -> dict:
+    """Live tail of build events. Frontend polls with `since=<last_seq>`."""
+    events = CATALOG_BUILDER.get_log(since=since, limit=limit)
+    return {
+        "events": events,
+        "cursor": CATALOG_BUILDER.log_cursor(),
+    }
+
+
+@app.post("/api/catalog/build")
+def catalog_build_start() -> dict:
+    started = CATALOG_BUILDER.start()
+    return {"started": started, "status": CATALOG_BUILDER.status().to_dict()}
+
+
+@app.post("/api/catalog/build/cancel")
+def catalog_build_cancel() -> dict:
+    CATALOG_BUILDER.cancel()
+    return {"cancelled": True}
+
+
+@app.post("/api/catalog/wipe")
+def catalog_wipe(x_confirm: str = "") -> dict:
+    """Admin-only: drop all catalog rows. Caller must send X-Confirm: yes."""
+    if x_confirm.lower() != "yes":
+        raise HTTPException(400, "set X-Confirm header to 'yes' to wipe")
+    catalog_db.wipe(CATALOG_DB_PATH)
+    return {"ok": True}
+
+
 @app.post("/api/upload")
 async def upload(
     session_id: str = Form(...),
@@ -350,8 +465,23 @@ async def upload(
     }
 
 
-def _format_user_message(text: str, file_path: str | None, graph_path: Path) -> str:
+def _format_user_message(
+    text: str,
+    file_path: str | None,
+    graph_path: Path,
+    node_context: NodeContext | None = None,
+) -> str:
     parts: list[str] = []
+    if node_context is not None:
+        parts.append(
+            "[Catalog context for this conversation]\n"
+            f"Path:        {node_context.breadcrumb}\n"
+            f"Node:        {node_context.label}  ({node_context.id})\n"
+            f"Description: {node_context.description}\n\n"
+            "Anchor your answers in this node. The student may ask follow-ups "
+            "about it, related entities, or how it connects to other things "
+            "in the course."
+        )
     if file_path:
         parts.append(
             f"The student has attached an assignment file at this absolute "
@@ -376,9 +506,14 @@ def _sse(event: str, data: object) -> bytes:
 async def _stream_chat(req: ChatRequest) -> AsyncIterator[bytes]:
     model = req.model or DEFAULT_MODEL
     graph_path = ensure_graph(req.session_id)
-    user_message = _format_user_message(req.message, req.file_path, graph_path)
-
     is_first_turn = not req.claude_session_id
+    user_message = _format_user_message(
+        req.message,
+        req.file_path,
+        graph_path,
+        node_context=req.node_context if is_first_turn else None,
+    )
+
     client = ClaudeAPI(
         working_dir=PROJECT_ROOT,
         permission_mode="bypassPermissions",
