@@ -1,12 +1,20 @@
 ---
-skill_id: "reading-connector-skill"
-name: "Reading Connector Skill"
+skill_id: "reading-connector"
+name: "Reading Connector"
 skill_type: "instructional"
+stance: "socratic"
 tags: ["course-infrastructure", "readings", "thematic-mapping", "lectures", "context"]
-python_entry: "logic.py"
+course_types: ["humanities"]
+learning_goal_tags:
+  - "identify-evidence"
+  - "interpret-evidence"
+  - "decompose-arguments"
+trigger_signals:
+  - "reading-purpose-unclear"
+  - "needs-reading-context"
 ---
 
-# Reading Connector Skill
+# Reading Connector
 
 ## Description
 Places a current reading in context with broader course themes and identifies which lectures
@@ -26,13 +34,10 @@ than treating it as an isolated assignment.
   does this relate to what we're studying?"
 - Student is writing an essay and needs to know which readings are relevant to their topic
   but hasn't made the connection themselves.
-- Another skill (Causal Chains, Assumption Validation, Decomposing Questions,
-  Cause-Effect Between Events, etc.) needs to know which readings bear on the student's
-  current question.
+- A downstream skill needs to know which readings bear on the student's current question.
 - Student is preparing for a discussion section and wants to know what the key connections
   between this week's reading and previous weeks are.
-- Lecture Ingestion Skill has built a course map and the student needs to place a reading
-  on it.
+- A course map has been built and the student needs to place a reading on it.
 
 ---
 
@@ -73,7 +78,7 @@ Using the course map and syllabus, identify:
 - **Structural placement:** Where does this reading's subject matter fall in the course's
   organizational scheme (chronological, thematic, or conceptual)?
 - **Lecture connections:** Which specific lectures covered the same topics, figures, or
-  themes? Reference the Lecture Ingestion Skill's map if available.
+  themes? Reference the course map if available.
 
 ### Step 4 — Map to Other Readings
 Identify which other course readings this text is in conversation with:
@@ -136,7 +141,7 @@ Materials needed to place the reading in context:
 - Course readings (the full set of assigned texts for the course).
 - Lecture slides and lecture notes (to identify lecture-to-reading connections).
 - Syllabus (to understand why the reading was assigned and where it falls in the arc).
-- Course map (from Lecture Ingestion Skill, if available).
+- Course map (if available).
 
 ## Outputs
 A structured connection map for the reading:

@@ -1,12 +1,21 @@
 ---
-skill_id: "identify-misconceptions-skill"
-name: "Identify Misconceptions Skill"
+skill_id: "id-misconception"
+name: "Identify Misconceptions"
 skill_type: "instructional"
+stance: "socratic"
 tags: ["teaching", "pedagogy", "misconceptions", "critical-thinking", "correction"]
-python_entry: "logic.py"
+course_types: ["humanities"]
+learning_goal_tags:
+  - "verify-claims"
+  - "surface-assumptions"
+  - "interpret-evidence"
+trigger_signals:
+  - "anachronistic-claim"
+  - "teleological-reasoning"
+  - "false-consensus-claim"
 ---
 
-# Identify Misconceptions Skill
+# Identify Misconceptions
 
 ## Description
 Surfaces and addresses common disciplinary misconceptions that students bring to their
@@ -32,7 +41,7 @@ wrong.
   course materials.
 - Student attributes a single motive to a large, diverse group ("everyone believed,"
   "society wanted," "the public demanded").
-- Assumption Validation Skill has flagged a premise as "far-fetched" and the underlying
+- A premise-validation skill has flagged a premise as "far-fetched" and the underlying
   issue appears to be a misconception rather than a missing source.
 - Student's argument depends on a factual error they believe to be common knowledge.
 
@@ -101,13 +110,13 @@ Use targeted questions to make the student see the problem:
 Once the student recognizes the issue:
 - Help them reframe the claim using discipline-appropriate language and evidence.
 - If the misconception was load-bearing (the argument depends on it), flag that the
-  argument may need restructuring — consider handing off to the Assumption Validation
-  Skill to stress-test the revised premise.
+  argument may need restructuring — consider handing off to a premise-validation skill
+  to stress-test the revised premise.
 - If the misconception was peripheral, a quick fix is sufficient — don't derail the
   student's momentum.
 - Point them to the specific course material (reading, lecture, primary source) that
-  provides the corrected understanding. Use the Reading Connector Skill or Lecture
-  Ingestion Skill to locate the relevant material if needed.
+  provides the corrected understanding. Use a reading-connector or lecture-ingestion skill
+  to locate the relevant material if needed.
 
 ### Step 5 — Inoculate Against Recurrence
 Name the *type* of misconception so the student can watch for it elsewhere in their
@@ -132,7 +141,7 @@ ask: which members of that group, according to what evidence?"
 - Correcting a misconception with information not found in the course materials. The
   correction should come from sources the student has access to.
 - Treating every imprecise statement as a misconception. Some claims are vague, not wrong —
-  vagueness is a different problem (e.g., an Assumption Validation issue).
+  vagueness is a different problem (e.g., a premise-validation issue).
 - Being condescending. Misconceptions are normal and usually reasonable given what students
   know from popular culture or prior courses.
 - Over-correcting to the point of paralyzing the student. Fix what matters for the
@@ -159,7 +168,7 @@ Class materials that provide the corrected understanding:
 - Lecture slides and lecture notes (the instructor's framing of topics and concepts).
 - Syllabus (the course's interpretive framework and organization).
 - Assignments (the student's writing or statements containing potential misconceptions).
-- Course map (from Lecture Ingestion Skill, if available).
+- Course map (if available).
 
 ## Outputs
 A structured misconception report the student can act on:

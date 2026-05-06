@@ -1,20 +1,25 @@
 ---
-skill_id: "lecture-ingestion-skill"
-name: "Lecture Ingestion Skill"
+skill_id: "lecture-ingestion"
+name: "Lecture Ingestion"
 skill_type: "instructional"
+stance: "meta"
 tags: ["course-infrastructure", "lectures", "timeline", "indexing", "context"]
-python_entry: "logic.py"
+course_types: ["humanities"]
+learning_goal_tags:
+  - "identify-evidence"
+  - "restate-the-problem"
+trigger_signals:
+  - "lecture-reference-unknown"
+  - "needs-course-context"
 ---
 
-# Lecture Ingestion Skill
+# Lecture Ingestion
 
 ## Description
 Pulls key items from lectures to construct an overall course map — chronological, thematic,
 or both — and a concept index; used as a reference by other skills. Transforms raw lecture
-materials (slides, notes, recordings) into a structured map that downstream skills
-(Causal Chains, Reading Connector, Decomposing Questions, Cause-Effect Between Events, etc.)
-can query for context, so that tutoring stays grounded in what the course has actually
-covered.
+materials (slides, notes, recordings) into a structured map that downstream skills can query
+for context, so that tutoring stays grounded in what the course has actually covered.
 
 ## Skill Type
 - **Type:** instructional
@@ -23,8 +28,8 @@ covered.
 ## When to Trigger
 - At the start of the term or when new lecture materials are uploaded, to build or update
   the course map.
-- When another skill (Causal Chains, Reading Connector, Identify Misconceptions, etc.)
-  needs to know what has been covered in lectures up to a given point.
+- When a downstream skill needs to know what has been covered in lectures up to a given
+  point.
 - Student references something "from lecture" without specifying which lecture or what was
   said — this skill can locate the reference.
 - Student is working on an assignment and needs to know which lectures are relevant to the
