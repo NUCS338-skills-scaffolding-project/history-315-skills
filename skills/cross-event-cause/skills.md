@@ -1,12 +1,20 @@
 ---
-skill_id: "cause-effect-between-events-skill"
-name: "Cause-Effect Between Events Skill"
+skill_id: "cross-event-cause"
+name: "Cross-Event Causation"
 skill_type: "instructional"
+stance: "socratic"
 tags: ["humanities", "cause-effect", "contextualization", "events", "analysis"]
-python_entry: "logic.py"
+course_types: ["humanities"]
+learning_goal_tags:
+  - "construct-arguments"
+  - "surface-assumptions"
+  - "evaluate-reasoning"
+trigger_signals:
+  - "cross-topic-connection"
+  - "vague-causal-claim"
 ---
 
-# Cause-Effect Between Events Skill
+# Cross-Event Causation
 
 ## Description
 Contextualizes how events, developments, or shifts influence each other in both broad and
@@ -29,10 +37,10 @@ than asserting that X "led to" Y.
 - Student is working on an assignment that asks them to connect topics from different units
   of the course (e.g., relating an early concept to a later outcome).
 - Student conflates broad structural influence with narrow event-to-event causation.
-- Causal Chains Skill has built a chain for one event, and the student now needs to connect
-  that chain to a second event or outcome.
-- Decomposing Questions Skill returned a task verb like *trace, explain, analyze the
-  causes of, account for the rise of, assess the consequences of*.
+- A causal-chain analysis has been built for one event, and the student now needs to
+  connect that chain to a second event or outcome.
+- An upstream skill returned a task verb like *trace, explain, analyze the causes of,
+  account for the rise of, assess the consequences of*.
 
 ---
 
@@ -99,7 +107,7 @@ Flag any connection the student cannot defend as **asserted, not established**.
 
 ### Step 6 — Hand Off
 Produce a compact connection map the student can use in their writing or feed to the
-Assumption Validation Skill for the underlying premises:
+a premise-validation skill for the underlying premises:
 - Phenomenon A (dated/contextualized, scoped)
 - Feature of A that traveled forward
 - Agent / mechanism / timeline

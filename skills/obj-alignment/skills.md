@@ -1,19 +1,26 @@
 ---
-skill_id: "learning-objective-comparison-skill"
-name: "Learning Objective Comparison Skill"
+skill_id: "obj-alignment"
+name: "Objective Alignment"
 skill_type: "instructional"
+stance: "meta"
 tags: ["course-infrastructure", "learning-objectives", "alignment", "assignment-design"]
-python_entry: "logic.py"
+course_types: ["humanities"]
+learning_goal_tags:
+  - "extract-requirements"
+  - "bound-scope"
+trigger_signals:
+  - "assignment-purpose-unclear"
+  - "misaligned-request"
 ---
 
-# Learning Objective Comparison Skill
+# Objective Alignment
 
 ## Description
-Compares the project and its learning objectives with course-level goals to inform other
-skills. Ensures that tutoring interventions stay aligned with what the assignment is actually
-designed to teach — not just what the student wants help with — so that downstream skills
-(Causal Chains, Assumption Validation, Decomposing Questions, etc.) reinforce the
-pedagogical intent rather than accidentally shortcutting the intended lesson.
+Compares an assignment and its learning objectives with course-level goals to inform
+downstream skills. Ensures that tutoring interventions stay aligned with what the assignment
+is actually designed to teach — not just what the student wants help with — so that any
+skill triggered afterward reinforces the pedagogical intent rather than accidentally
+shortcutting the intended lesson.
 
 ## Skill Type
 - **Type:** instructional
@@ -22,8 +29,8 @@ pedagogical intent rather than accidentally shortcutting the intended lesson.
 ## When to Trigger
 - A student asks for help on an assignment and the tutor needs to understand what the
   assignment is designed to teach before providing guidance.
-- Another skill (Causal Chains, Decomposing Questions, Reading Connector, etc.) is about to
-  run and needs context on which learning objectives are in play.
+- A downstream skill is about to run and needs context on which learning objectives are in
+  play.
 - Student's request for help is misaligned with the assignment's purpose (e.g., asking for
   factual recall when the assignment is testing analytical argument, or asking for a summary
   when the assignment is testing interpretation).

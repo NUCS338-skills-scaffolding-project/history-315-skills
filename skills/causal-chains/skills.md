@@ -1,19 +1,28 @@
 ---
-skill_id: "causal-chains-skill"
-name: "Causal Chains Skill"
+skill_id: "causal-chains"
+name: "Causal Chains"
 skill_type: "instructional"
+stance: "socratic"
 tags: ["history", "causation", "contextualization", "analysis"]
+course_types: ["humanities"]
+learning_goal_tags:
+  - "construct-arguments"
+  - "surface-assumptions"
+  - "evaluate-reasoning"
+trigger_signals:
+  - "vague-causal-claim"
+  - "student-asserts-causation"
 python_entry: "logic.py"
 ---
 
-# Causal Chains Skill
+# Causal Chains
 
 ## Description
-Helps students contextualize a historical event by mapping the chain of causes, conditions,
-and consequences around it — both at a narrow scope (immediate triggers and effects) and a
-broad scope (structural conditions and long-run fallout). Surfaces where a student's chain
-is thin, where a "cause" is actually a correlation, and where a link has been asserted
-without a mechanism.
+Helps students contextualize an event or development by mapping the chain of causes,
+conditions, and consequences around it — both at a narrow scope (immediate triggers and
+effects) and a broad scope (structural conditions and long-run fallout). Surfaces where a
+student's chain is thin, where a "cause" is actually a correlation, and where a link has
+been asserted without a mechanism.
 
 ## Skill Type
 - **Type:** instructional
@@ -24,8 +33,8 @@ without a mechanism.
 - Student is explaining the origins or legacy of an event and treats it as isolated.
 - Student conflates a precondition (something that made X possible) with a trigger
   (something that actually set X off).
-- Decomposing Questions Skill returned a task verb like *trace, explain, analyze the
-  causes of, account for the rise of, assess the consequences of*.
+- An upstream skill returned a task verb like *trace, explain, analyze the causes of,
+  account for the rise of, assess the consequences of*.
 - Student's argument skips from structural context to outcome with no actor in between.
 
 ---
@@ -70,7 +79,7 @@ Mark any arrow the student can't defend as **asserted**, not established.
 
 ### Step 5 — Hand Off
 Produce a compact chain (nodes + typed edges) the student can drop into a paragraph or
-feed to Assumption Validation for the underlying premises.
+feed to a downstream skill for premise validation.
 
 ---
 
